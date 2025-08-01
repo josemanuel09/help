@@ -58,19 +58,22 @@ async function crearTicketGLPI(mensaje, remitente) {
 app.post('/webhook', async (req, res) => {
     console.log('📩 Mensaje recibido de Z-API:', JSON.stringify(req.body, null, 2));
 
-    // Validación de evento y mensaje
-    if (!req.body || req.body.event !== 'MESSAGE' || !req.body.message || !req.body.message.text) {
-        return res.sendStatus(200);
+    const { phone, text, fromMe } = req.body;
+
+    if (fromMe || !text?.message) {
+        return res.sendStatus(200); // Ignorar mensajes del propio bot o vacíos
     }
 
-    const texto = req.body.message.text;
-    const remitente = req.body.message.from;
+    const mensaje = text.message;
+    const remitente = phone;
 
     try {
-        await crearTicketGLPI(texto, remitente);
-        res.send('✅ Ticket creado desde WhatsApp');
+        await crearTicketGLPI(mensaje, remitente);
+        console.log('✅ Ticket creado exitosamente');
+        res.send('Ticket creado.');
     } catch (err) {
-        res.status(500).send('❌ Error al crear ticket');
+        console.error('❌ Error al crear ticket en GLPI:', err.message);
+        res.status(500).send('Error al crear ticket');
     }
 });
 
